@@ -5,47 +5,48 @@ const userRoutes = require('./routes/userRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 
-// Initialize express app
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Middleware
-app.use(cors());
+// ✅ CORS Configuration
+const corsOptions = {
+  origin: process.env.CLIENT_URL || '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// API routes
+// ✅ API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
-// Serve static files from the client directory in development and production
-// This makes the server capable of serving the client build files
-app.use(express.static(path.join(__dirname, '../client/dist')));
+// ✅ Serve static files from the client build directory
+const clientBuildPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientBuildPath));
 
-// Handle any API requests that don't match the above routes
+// ✅ Handle unknown API endpoints
 app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    message: 'API endpoint not found',
-  });
+  res.status(404).json({ message: 'API endpoint not found' });
 });
 
-// Catch-all route to serve the React app for any other requests
+// ✅ Catch-all route to serve the React app
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
-// Error handling middleware
+// ✅ Error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'production' ? {} : err
-  });
+  console.error(`[Error]: ${err.message}`);
+  res.status(500).json({ message: err.message || 'Something went wrong!' });
 });
 
-// Start the server
+// ✅ Start the server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API available at http://localhost:${PORT}/api`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ API available at http://localhost:${PORT}/api`);
 });
 
 module.exports = app;
